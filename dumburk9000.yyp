@@ -1,5 +1,8 @@
 {
   "resources": [
+    {"id":{"name":"obj_global","path":"objects/obj_global/obj_global.yy",},"order":0,},
+    {"id":{"name":"math","path":"scripts/math/math.yy",},"order":1,},
+    {"id":{"name":"state","path":"scripts/state/state.yy",},"order":0,},
     {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},"order":0,},
   ],
   "Options": [
