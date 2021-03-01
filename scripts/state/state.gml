@@ -1,3 +1,4 @@
+// Game State
 enum GAME_STATE {
 	DAY,
 	UPGRADE,
@@ -6,9 +7,119 @@ enum GAME_STATE {
 	NUM
 }
 
+
+// Upgrades
+enum UPGRADE {
+	// Multiple levels
+	SHIP,
+	DANCE_FLOOR,
+	
+	// Single upgrade
+	TREE,
+	
+	NUM
+}
+
+function initUpgrades() {
+	upgrades = [
+		create_upgrade(UPGRADE.SHIP, "Ship", [0, 100, 250, 800, 1200]),
+		create_upgrade(UPGRADE.DANCE_FLOOR, "Dance Floor", [0, 50, 150, 300]),
+		create_upgrade(UPGRADE.TREE, "Tree", [20]),
+	];
+	
+	// Validate I put them in the correct order
+	for (var i = 0; i < array_length_1d(upgrades); ++i) {
+		var upgrade = upgrades[i];
+		if (upgrade.index != i) {
+			show_message("obj_global: Upgrade index invalid");
+		}
+	}
+}
+
+
+// Log colors
+enum LOG_COLOR {
+	DEFAULT,
+	DISABLED,
+	ERROR,
+	FAILED,
+	
+	CHANGE_STATE,
+	
+	OPTION_SELECTED,
+	OPTION_DESELECTED,
+	
+	INCREASE,
+	
+	PURCHASE,
+	
+	NUM
+}
+
+function initLogColorTable() {
+	logColorTable = [];
+	logColorTable[LOG_COLOR.DEFAULT] = c_ltgray;
+	logColorTable[LOG_COLOR.DISABLED] = c_dkgray;
+	logColorTable[LOG_COLOR.ERROR] = c_red;
+	logColorTable[LOG_COLOR.FAILED] = c_maroon;
+	logColorTable[LOG_COLOR.CHANGE_STATE] = c_white;
+	logColorTable[LOG_COLOR.OPTION_SELECTED] = c_white;
+	logColorTable[LOG_COLOR.OPTION_DESELECTED] = c_ltgray;
+	logColorTable[LOG_COLOR.INCREASE] = c_lime;
+	logColorTable[LOG_COLOR.PURCHASE] = c_yellow;
+}
+
+// Actions
+enum ACTION {
+	NONE = -1,
+	
+	BEGIN_STATE,
+	
+	DO_STATE_DAY,
+	
+	CHOOSE_UPGRADE,
+	DO_STATE_UPGRADE,
+	
+	DO_STATE_NIGHT,
+	
+	DO_STATE_REVIEW,
+	
+	END_STATE,
+	
+	NUM
+}
+
+function initActions() {
+	actionTable = [];
+	function addAction(action, func) {
+		actionTable[action] = func;
+	}
+	
+	actionTable[ACTION.BEGIN_STATE] = begin_state;
+	
+	actionTable[ACTION.DO_STATE_DAY] = do_state_day;
+	
+	actionTable[ACTION.CHOOSE_UPGRADE] = choose_upgrade;
+	actionTable[ACTION.DO_STATE_UPGRADE] = do_state_upgrade;
+	
+	actionTable[ACTION.DO_STATE_NIGHT] = do_state_night;
+	
+	actionTable[ACTION.DO_STATE_REVIEW] = do_state_review;
+	
+	actionTable[ACTION.END_STATE] = next_state;
+}
+
+function init() {
+	initUpgrades();
+	initLogColorTable();
+	initActions();
+}
+
+
+// DS List stuff
 function ds_list_pop(dslist_id) {
 	var lastIndex = ds_list_size(dslist_id) - 1;
-	var result = ds_list_find_value(dslist_id, lastIndex);
+	var result = dslist_id[| lastIndex];
 	ds_list_delete(dslist_id, lastIndex);
 	return result;
 }
@@ -36,7 +147,7 @@ function add_to_action_log(actionColorIndex, str) {
 }
 
 function execute_action() {
-	var i = currentAction.value;
+	var i = currentAction;
 	if ((i <= ACTION.NONE) || (i >= ACTION.NUM)) {
 		show_message("execute_action(): ???");
 		return;
@@ -61,6 +172,10 @@ function create_upgrade(index, title, costs) {
 
 function get_upgrade_level(index) {
 	return upgrades[index].level;
+}
+
+function get_party_size_goal() {
+	return 10000;
 }
 
 function perform_upgrade(index) {
@@ -90,57 +205,53 @@ function log_increase(str, prev, next) {
 	add_to_action_log(LOG_COLOR.INCREASE, str + " " + signStr + string(increase) + " [" + string(prev) + " -> " + string(next) + "]");
 }
 
-function _begin_state() {
-	//ds_list_empty(currentAction.arguments);
-	
+function begin_state() {
 	switch (gameState) {
 		case GAME_STATE.DAY: {
-			currentAction.value = ACTION.DO_STATE_DAY;
+			currentAction = ACTION.DO_STATE_DAY;
 			execute_action();
 		} break;
 				
 		case GAME_STATE.UPGRADE: {
 			cursorIndex = 0;
 			
-			//ds_list_add(currentAction.arguments, 0);
-			
 			add_to_action_log(LOG_COLOR.DEFAULT, "Choose upgrade: ");
 			for (var i = 0; i < array_length_1d(upgrades); ++i) {
 				var upgrade = upgrades[i];
 				add_to_action_log(LOG_COLOR.OPTION_DESELECTED, "> " + upgrade.title);
 			}
-			add_to_action_log(LOG_COLOR.OPTION_DESELECTED, "> None");
+			add_to_action_log(LOG_COLOR.OPTION_DESELECTED, "> None (Done Shopping)");
 			
-			currentAction.value = ACTION.CHOOSE_UPGRADE;
+			currentAction = ACTION.CHOOSE_UPGRADE;
 		} break;
 				
 		case GAME_STATE.NIGHT: {
-			currentAction.value = ACTION.DO_STATE_NIGHT;
+			currentAction = ACTION.DO_STATE_NIGHT;
 			execute_action();
 		} break;
 				
 		case GAME_STATE.REVIEW: {
-			currentAction.value = ACTION.DO_STATE_REVIEW;
+			currentAction = ACTION.DO_STATE_REVIEW;
 			execute_action();
 		} break;
 	}
 }
 
-function _do_state_day() {
+function do_state_day() {
 	var oldLoot = loot;
 	loot += 20 + irandom(partySize) * 10;
 	
 	log_increase("Loot", oldLoot, loot);
 	
-	currentAction.value = ACTION.END_STATE;
+	currentAction = ACTION.END_STATE;
 }
 
 function choose_upgrade() {
-	currentAction.value = ACTION.DO_STATE_UPGRADE;
+	currentAction = ACTION.DO_STATE_UPGRADE;
 	execute_action();
 }
 
-function _do_state_upgrade() {
+function do_state_upgrade() {
 	var numUpgrades = array_length_1d(upgrades);
 	if (cursorIndex == numUpgrades) {
 		stash_action_log(numUpgrades + 2);
@@ -151,32 +262,32 @@ function _do_state_upgrade() {
 		else if (upgradesPurchased == 1)
 			add_to_action_log(LOG_COLOR.DEFAULT, "1 upgrade purchased");
 		else
-			add_to_action_log(LOG_COLOR.DEFAULT, upgradesPurchased + " upgrades purchased");
+			add_to_action_log(LOG_COLOR.DEFAULT, string(upgradesPurchased) + " upgrades purchased");
 		upgradesPurchased = 0;
 		
-		currentAction.value = ACTION.END_STATE;
+		currentAction = ACTION.END_STATE;
 		return;
 	}
 	
 	var upgrade = upgrades[cursorIndex];
 	if (upgrade.maxedOut) {
-		currentAction.value = ACTION.CHOOSE_UPGRADE;
+		currentAction = ACTION.CHOOSE_UPGRADE;
 		return; // NOTE(bret): Do nothing
 	}
 	
 	if (upgrade.nextCost <= loot) {
 		++upgradesPurchased;
 		perform_upgrade(upgrade.index);
-		currentAction.value = ACTION.CHOOSE_UPGRADE;
-		//currentAction.value = ACTION.END_STATE;
+		currentAction = ACTION.CHOOSE_UPGRADE;
+		//currentAction = ACTION.END_STATE;
 		return;
 	}
 	
 	// Cannot afford
-	currentAction.value = ACTION.CHOOSE_UPGRADE;
+	currentAction = ACTION.CHOOSE_UPGRADE;
 }
 
-function _do_state_night() {
+function do_state_night() {
 	var oldPartySize = partySize;
 	partySize = approach(partySize, get_ship_capacity(), 1 + irandom(4));
 	
@@ -185,27 +296,45 @@ function _do_state_night() {
 	else
 		log_increase("Party", oldPartySize, partySize);
 	
-	currentAction.value = ACTION.END_STATE;
+	currentAction = ACTION.END_STATE;
 }
 
-function _do_state_review() {
-	add_to_action_log(LOG_COLOR.DEFAULT, "Wow, you're doing well!");
+function do_state_review() {
+	var shipCapacity = get_ship_capacity();
+	var goal = get_party_size_goal();
+	add_to_action_log(LOG_COLOR.DEFAULT, "Your ship capacity is " + string(shipCapacity));
+	add_to_action_log(LOG_COLOR.DEFAULT, "You can house " + string(shipCapacity - partySize) + " more party members");
+	add_to_action_log(LOG_COLOR.DEFAULT, "You have " + string(partySize) + "/" + string(goal) + " party members needed");
 	
-	currentAction.value = ACTION.END_STATE;
+	currentAction = ACTION.END_STATE;
 }
 
-function _next_state() {
+function next_state() {
 	gameState = (gameState + 1) % GAME_STATE.NUM;
 	if (gameState == 0) {
 		++day;
 	}
-	add_to_action_log(LOG_COLOR.DEFAULT, "");
-	add_to_action_log(LOG_COLOR.CHANGE_STATE, "> Switched state to [" + gameStateToStr(gameState) + "]");
 	
-	currentAction.value = ACTION.BEGIN_STATE;
+	if (ds_list_size(actionLog) > 0)
+		add_to_action_log(LOG_COLOR.DEFAULT, "");
+	add_to_action_log(LOG_COLOR.CHANGE_STATE, "# Switched state to [" + game_state_to_string(gameState) + "]");
+	
+	switch (gameState) {
+		case GAME_STATE.DAY: {
+			audio_stop_sound(snd_track_night);
+			audio_play_sound(snd_track_day, 10, true);
+		} break;
+		
+		case GAME_STATE.NIGHT: {
+			audio_stop_sound(snd_track_day);
+			audio_play_sound(snd_track_night, 10, true);
+		} break;
+	}
+	
+	currentAction = ACTION.BEGIN_STATE;
 }
 
-function gameStateToStr(gameState) {
+function game_state_to_string(gameState) {
 	switch (gameState) {
 		case GAME_STATE.DAY:
 			return "DAY";

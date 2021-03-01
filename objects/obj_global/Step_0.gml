@@ -1,3 +1,5 @@
+if (live_call()) return live_result;
+
 if (advanceTimer > 0) {
 	--advanceTimer;
 }
@@ -17,16 +19,16 @@ function choose_upgrade() {
 		if (keyboard_check(vk_down)) {
 			++cursorIndex;
 		}
-		
-		cursorIndex = (cursorIndex + num) % num;
 	}
+	
+	cursorIndex = (cursorIndex + num) % num;
 	
 	for (var i = 0; i < num; ++i) {
 		var selected = i == cursorIndex;
 		var index = selected ? LOG_COLOR.OPTION_SELECTED : LOG_COLOR.OPTION_DESELECTED;
 		var prefix = selected ? "> " : "  ";
 		var actionIndex = ds_list_size(actionLog) - num + i;
-		var log = ds_list_find_value(actionLog, actionIndex);
+		var log = actionLog[| actionIndex];
 		if (i < array_length_1d(upgrades)) {
 			if (upgrades[i].nextCost > loot) {
 				index = selected ? LOG_COLOR.ERROR : LOG_COLOR.FAILED;
@@ -39,11 +41,9 @@ function choose_upgrade() {
 	}
 }
 
-window_set_caption("Stash size: " + string(ds_list_size(actionLogStash)));
-
 switch (gameState) {
 	case GAME_STATE.UPGRADE: {
-		switch (currentAction.value) {
+		switch (currentAction) {
 			case ACTION.CHOOSE_UPGRADE: {
 				choose_upgrade();
 			} break;
@@ -53,6 +53,7 @@ switch (gameState) {
 
 if ((advanceTimer == 0) && (keyboard_check(vk_space))) {
 	execute_action();
+	++cursorIndex;
 }
 
 var keys = [

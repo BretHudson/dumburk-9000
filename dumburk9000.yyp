@@ -3,9 +3,12 @@
     {"id":{"name":"obj_gmlive","path":"objects/obj_gmlive/obj_gmlive.yy",},"order":2,},
     {"id":{"name":"GMLiveAPI","path":"scripts/GMLiveAPI/GMLiveAPI.yy",},"order":1,},
     {"id":{"name":"obj_global","path":"objects/obj_global/obj_global.yy",},"order":0,},
+    {"id":{"name":"snd_track_night","path":"sounds/snd_track_night/snd_track_night.yy",},"order":1,},
+    {"id":{"name":"snd_track_day","path":"sounds/snd_track_day/snd_track_day.yy",},"order":0,},
     {"id":{"name":"math","path":"scripts/math/math.yy",},"order":1,},
     {"id":{"name":"GMLive","path":"scripts/GMLive/GMLive.yy",},"order":0,},
     {"id":{"name":"state","path":"scripts/state/state.yy",},"order":0,},
+    {"id":{"name":"fnt_default","path":"fonts/fnt_default/fnt_default.yy",},"order":0,},
     {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},"order":0,},
   ],
   "Options": [
